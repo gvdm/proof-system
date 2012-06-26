@@ -1,0 +1,17 @@
+The Proof Exploration, Negotiation and Inspection program (once finished) will
+allow you to penetrate deeply into the formalisms of CS and truly experience
+proof satisfaction. The push and pull of negotiating proofs will seem firmer
+and the results will be 
+
+This program is based on the work done in Practical Foundations for Programming
+Languages by Robert Harper from Carnegie Mellon University [Draft of June 6,
+2008 at 5:36pm.])
+
+Currently the theorem prover allows for simple concrete theorems to be derived
+and for statements of derivability to be tested. 
+
+Admissability is TBD
+
+
+
+Contact Gustav van der Merwe at gustav@afrikara.co.za
