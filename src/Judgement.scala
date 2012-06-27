@@ -64,7 +64,7 @@ object Derivable {
 	  else None
   }
   def unapply(rule: InferenceRule): Judgement =
-    Judgement("⊢", (rule.premises toList) :+ rule.conclusion)
+    Judgement("⊢", (rule.premises toList) :+ rule.conclusion, LastFix)
   def unapply(str: String): Judgement = {
     // TODO: parse "x,y,z ⊢ d" into Derivable(List(x,y,z), d))
     null
