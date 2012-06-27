@@ -49,18 +49,22 @@ case class Judgement(symbol: String, subjects: List[Objct], fix: NFix = PreFix) 
 }
 
 object Derivable {
-  def apply(hypothesis: Judgement, consequent: Judgement) = Judgement("⊢", List(hypothesis, consequent), LastFix)
-  def apply(hypothesis: List[Judgement], consequent: Judgement) = Judgement("⊢", hypothesis :+ consequent, LastFix)
+  def apply(hypothesis: Judgement, consequent: Judgement) =
+    Judgement("⊢", List(hypothesis, consequent), LastFix)
+  def apply(hypothesis: Set[Judgement], consequent: Judgement) =
+    Judgement("⊢", (hypothesis toList) :+ consequent, LastFix)
   def unapply(j: Judgement): Option[(Set[Judgement], Judgement)] = {
 	  if (j.symbol == "⊢") try {
-	    Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet, j.subjects.last.asInstanceOf[Judgement]))
+	    Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet,
+	        j.subjects.last.asInstanceOf[Judgement]))
 	  } catch {
 	    // fix to be correct exception for failed cast
 	    case a: IllegalAccessError => None
 	  }
 	  else None
   }
-  def unapply(rule: InferenceRule): Judgement = Judgement("⊢", (rule.premises toList) :+ rule.conclusion)
+  def unapply(rule: InferenceRule): Judgement =
+    Judgement("⊢", (rule.premises toList) :+ rule.conclusion)
   def unapply(str: String): Judgement = {
     // TODO: parse "x,y,z ⊢ d" into Derivable(List(x,y,z), d))
     null
@@ -81,20 +85,12 @@ object Admissable {
   }
 }
 
-// TODO: derive parametric judgements
+// TODO: parametric judgements
 object Parametric {
   def apply(params: Set[Var], j: Judgement) = Judgement("|", (params toList) :+ j, LastFix)
 }
 
-object Nat { def apply(natural: Objct) = Judgement("nat", List(natural), PostFix) }
-object Sum { def apply(a: Objct, b: Objct, sum: Objct) = Judgement("sum", List(a, b, sum)) }
 object Eq { def apply(a: Objct, b: Objct) = Judgement("=", List(a, b)) }
-
-object Tr { def apply(tree: Objct) = Judgement("tree", List(tree), PostFix) }
-
-object Lt { def apply(list: Objct) = Judgement("list", List(list), PostFix) }
-
-object Ast { def apply(ast: Objct) = Judgement("ast", List(ast), PostFix) }
 
 object IsType { def apply(typ: Objct) = Judgement("type", List(typ), PostFix) }
 object HasType { def apply(expression: Objct, typ: Objct) = Judgement(":", List(expression, typ), InFix) }
