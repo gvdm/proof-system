@@ -25,7 +25,7 @@ abstract class ObjctDef {
 abstract class Objct {
   type EnvMap = collection.immutable.Map[Var, Objct]
   
-  // matches variables in this object construction against an object with similar construction 
+  // matches variables in this object construction against an object with the same construction 
   def matchVarObj(e: EnvMap, o: Objct): EnvMap = { return e }
     //if (o != this) throw new Error("Objct constructions did not match")
 
