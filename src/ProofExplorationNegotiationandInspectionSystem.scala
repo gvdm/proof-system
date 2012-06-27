@@ -26,7 +26,7 @@ object ProofExplorationNegotiationandInspectionSystem {
         val d = new Derive(theorem)
         val b = d.backward
         val f = d.forward
-        println(f)
+        println(b)
         println
         assert(b == f)
       }
