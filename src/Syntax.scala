@@ -40,4 +40,3 @@ object Strng extends ObjctDef {
 
   def rules = Set()
 }
-

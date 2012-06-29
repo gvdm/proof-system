@@ -41,9 +41,6 @@ case class Derivation(statement: Judgement, derivations: Set[Derivation], reason
   }
 }
 
-object VariableUniquenessException /*(v:String, o1:String, o2:String)*/ extends Throwable
-object InvalidJudgementException extends Throwable
-
 class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
   var theorem = theoremToProve
   var context = contextToUse

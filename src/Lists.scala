@@ -1,6 +1,6 @@
 /**
  * Copyright © 2012 Gustav van der Merwe
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -16,6 +16,7 @@
  */
 
 object Lst { def apply(list: Objct) = Judgement("list", List(list), PostFix) }
+
 case object Nl extends Objct
 case class Cons(head: Objct, tail: Objct) extends Objct {
   override def matchVarObj(e: EnvMap, o: Objct): EnvMap = {

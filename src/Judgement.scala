@@ -1,6 +1,6 @@
 /**
  * Copyright © 2012 Gustav van der Merwe
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -15,12 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+object InvalidJudgementException extends Throwable
+
 sealed abstract class NFix
 case object PreFix extends NFix
 case object InFix extends NFix
 case object LastFix extends NFix
 case object PostFix extends NFix
 
+// TODO: change to extractor pattern
 case class Judgement(symbol: String, subjects: List[Objct], fix: NFix = PreFix) extends Objct {
   override def toString() = fix match {
     case PreFix  ⇒ symbol + "(" + subjects.mkString(", ") + ")"

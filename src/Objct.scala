@@ -1,6 +1,6 @@
 /**
  * Copyright © 2012 Gustav van der Merwe
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -16,6 +16,7 @@
  */
 
 object IncorrectJudgemntObjct extends Throwable
+object VariableUniquenessException /*(v:String, o1:String, o2:String)*/ extends Throwable
 
 abstract class ObjctDef {
   def definition: Set[Rule]
@@ -38,7 +39,9 @@ abstract class Objct {
 }
 
 case class Var(name: String) extends Objct {
-  override def matchVarObj(e: EnvMap, o: Objct) = e + (this -> o) // should match one var to another
+  override def matchVarObj(e: EnvMap, o: Objct) =
+    if (e.contains(this) && e(this) != o) throw VariableUniquenessException
+    else e + (this -> o)
   override def vars = Set(this)
   override def replaceVars(e: EnvMap): Objct = e(this)
 }
