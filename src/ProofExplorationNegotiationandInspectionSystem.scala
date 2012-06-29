@@ -19,8 +19,7 @@
 object ProofExplorationNegotiationandInspectionSystem {
 
   def main(args: Array[String]) {
-    valid foreach { theorem ⇒/*::: invalid */
-    /*derivable*/
+    valid ::: derivable foreach { theorem ⇒
       {
         println("Deriving: " + theorem)
         val d = new Derive(theorem)

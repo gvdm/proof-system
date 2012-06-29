@@ -47,7 +47,6 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
 
   // check whether we are checking for derivability or admissibality and adjust rule set accordingly
   theorem match {
-    //unsafe asInstanceOf should be safe because we are working with a Derivable judgement
     case Derivable(h, s)  ⇒ { context ++= h.map(Axiom(_)); theorem = s }
     // TODO: exhaustively show all derivations for sure
     case Admissable(h, s) ⇒ null
@@ -65,25 +64,7 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
 
       if (theorem.symbol == j.symbol) {
         try {
-          //begin with an empty environment, match all the vars in the conclusion of the rule
-          var varValues: Objct#EnvMap = emptyEnv
-          if (j.subjects.flatMap(_.vars).distinct.size > 0) {
-            // figure out what all the substitutions should be by finding variables in the
-            // rules conclusion
-            // (does the conclusion have a variable in any of its object constructions,
-            // if so, map that to the value of the object in the same place in the 
-            // object construction in the theorem we want to prove)
-            for ((obsub, thsub) ← j.subjects.zip(theorem.subjects)) {
-              // TODO: handle variables being reassigned in later subjcts
-              val newVarAssignments = obsub.matchVarObj(varValues, thsub)
-              if (varValues.keySet.intersect(newVarAssignments.keySet) != Set() &&
-                varValues.keySet.intersect(newVarAssignments.keySet).exists { v ⇒ varValues(v) != newVarAssignments(v) })
-                throw VariableUniquenessException // came across a variable that was given different mappings
-              if (thsub != obsub.replaceVars(newVarAssignments))
-                throw InvalidJudgementException
-              varValues = varValues ++ newVarAssignments
-            }
-          }
+          val varValues: Objct#EnvMap = j.matchVarObj(emptyEnv, theorem)
 
           rule match {
             case Axiom(a) ⇒ {
@@ -106,9 +87,9 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
           }
         } catch {
           // TODO: handle incorrectly formed expressions
-          case VariableUniquenessException ⇒ null
+          case VariableUniquenessException ⇒ throw new Error("VariableUniquenessException")
           case InvalidJudgementException   ⇒ null
-          case IncorrectJudgemntObjct      ⇒ null //return Derivation(theorem, Set(), \Axiom(Judgement("⊥", List(theorem))))
+          case IncorrectJudgemntObjct      ⇒ null //return Derivation(theorem, Set(), Axiom(Judgement("⊥", List(theorem))))
         }
       }
     }

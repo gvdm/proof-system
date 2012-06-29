@@ -32,6 +32,25 @@ case class Judgement(symbol: String, subjects: List[Objct], fix: NFix = PreFix) 
     case PostFix ⇒ subjects.mkString + " " + symbol
   }
 
+  override def matchVarObj(e: EnvMap, o: Objct): EnvMap = {
+    o match {
+      case Judgement(sym, subs, fix) ⇒ if (sym == symbol) {
+        var varValues: EnvMap = new collection.immutable.HashMap[Var, Objct]
+        for ((obsub, thsub) ← subjects zip subs) {
+          val newVarAssignments = obsub.matchVarObj(varValues, thsub)
+          val sharedVars = varValues.keySet.intersect(newVarAssignments.keySet)
+          if (sharedVars != Set() && sharedVars.exists { v ⇒ varValues(v) != newVarAssignments(v) })
+            throw VariableUniquenessException // came across a variable that was given different mappings
+          if (thsub != obsub.replaceVars(newVarAssignments))
+            throw InvalidJudgementException
+          varValues = varValues ++ newVarAssignments
+        }
+        return varValues
+      } else throw IncorrectJudgemntObjct
+      case _ ⇒ throw IncorrectJudgemntObjct
+    }
+  }
+  override def vars = (subjects map { _.vars }) reduceLeft { _ ++ _ }
   override def replaceVars(env: Objct#EnvMap): Judgement = {
     this copy (subjects = (this.subjects).map(_.replaceVars(env)))
   }
@@ -57,14 +76,14 @@ object Derivable {
   def apply(hypothesis: Set[Judgement], consequent: Judgement) =
     Judgement("⊢", (hypothesis toList) :+ consequent, LastFix)
   def unapply(j: Judgement): Option[(Set[Judgement], Judgement)] = {
-	  if (j.symbol == "⊢") try {
-	    Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet,
-	        j.subjects.last.asInstanceOf[Judgement]))
-	  } catch {
-	    // fix to be correct exception for failed cast
-	    case a: IllegalAccessError => None
-	  }
-	  else None
+    if (j.symbol == "⊢") try {
+      Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet,
+        j.subjects.last.asInstanceOf[Judgement]))
+    } catch {
+      // TODO: fix to be correct exception for failed cast
+      case a: IllegalAccessError ⇒ None
+    }
+    else None
   }
   def unapply(rule: InferenceRule): Judgement =
     Judgement("⊢", (rule.premises toList) :+ rule.conclusion, LastFix)
@@ -78,13 +97,13 @@ object Admissable {
   def apply(hypothesis: Judgement, consequent: Judgement) = Judgement("⊨", List(hypothesis, consequent), LastFix)
   def apply(hypothesis: List[Judgement], consequent: Judgement) = Judgement("⊨", hypothesis :+ consequent, LastFix)
   def unapply(j: Judgement): Option[(Set[Judgement], Judgement)] = {
-	  if (j.symbol == "⊢") try {
-	    Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet, j.subjects.last.asInstanceOf[Judgement]))
-	  } catch {
-	    // fix to be correct exception for failed cast
-	    case a: IllegalAccessError => None
-	  }
-	  else None
+    if (j.symbol == "⊢") try {
+      Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet, j.subjects.last.asInstanceOf[Judgement]))
+    } catch {
+      // TODO: fix to be correct exception for failed cast
+      case a: IllegalAccessError ⇒ None
+    }
+    else None
   }
 }
 
