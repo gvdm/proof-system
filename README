@@ -1,17 +1,20 @@
-The Proof Exploration, Negotiation and Inspection program (once finished) will
+The Proof Exploration, Negotiation and Inspection System (once finished) will
 allow you to penetrate deeply into the formalisms of CS and truly experience
 proof satisfaction. The push and pull of negotiating proofs will seem firmer
-and the results will be 
+and in capable hands.
+
+Currently the theorem prover allows for simple concrete theorems to be derived
+and for statements of derivability to be tested. Currently its "source code
+configured".
+
+Somewhere down the line there will be the ability to construct environments/
+contexts for proofs. Also, some kind of interface to allow for interactive
+editing and testing of theorems/proofs. Being able to save/load created rules.
+Some kind of syntax for reperesenting the proofs in a kind of pretty-print
+fashion while still being easy to write/read. 
 
 This program is based on the work done in Practical Foundations for Programming
 Languages by Robert Harper from Carnegie Mellon University [Draft of June 6,
 2008 at 5:36pm.])
-
-Currently the theorem prover allows for simple concrete theorems to be derived
-and for statements of derivability to be tested. 
-
-Admissability is TBD
-
-
 
 Contact Gustav van der Merwe at gustav@afrikara.co.za
