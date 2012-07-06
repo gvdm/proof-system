@@ -44,6 +44,9 @@ case class Var(name: String) extends Objct {
     else e + (this -> o)
   override def vars = Set(this)
   override def replaceVars(e: EnvMap): Objct = e(this)
+  override def toString = "$"+name
 }
 
-case class Val(value: String) extends Objct
+case class Val(value: Any) extends Objct {
+  override def toString = value.toString
+}
