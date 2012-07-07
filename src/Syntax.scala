@@ -18,25 +18,5 @@
 sealed trait AbstractSyntaxTree extends Objct
 
 object Ast { def apply(ast: Objct) = Judgement("ast", List(ast), PostFix) }
-object Symbol { def apply(sym: Objct) = Judgement("sym", List(sym)) }
+object Symbol { def apply(sym: Objct) = Judgement("sym", List(sym), PostFix) }
 object Distinct { def apply(a: Objct, b: Objct) = Judgement("#", List(a, b), InFix) }
-
-object Char { def apply(c: Objct) = Judgement("char", List(c)) }
-object Str { def apply(s: Objct, Σ: Set[Judgement] = Strng.alphabet) = Derivable(Σ, Judgement("str", List(s))) }
-
-object Strng extends ObjctDef {
-
-  val nullStr = Val("ε")
-  //TODO: Create programmatically, for now we have a short alphabet
-  val alphabetChars = Set("a", "b", "c", "d", "e", "f");
-  val alphabet = alphabetChars map { c ⇒ Char(Val(c)) }
-
-  def definition = Set(
-    Axiom(Str(nullStr)) //,
-    //TODO: write inductive definition of str judgement
-  //InferenceRule(Set(Char(Var("c")), ),
-  //    Str)
-  )
-
-  def rules = Set()
-}

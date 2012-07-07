@@ -31,7 +31,13 @@ case class Axiom(axiom: Judgement) extends Rule(axiom) {
 //}
 
 object Rules {
-  def objStructureDefs = Naturals.definition ++ Trees.definition ++ Lists.definition
+  // TODO: find a code pattern to combine all the definitions and rules of subclasses of ObjctDef
+  // as to not have to update here when adding new types
+  def objStructureDefs =
+    Naturals.definition ++
+    Trees.definition ++
+    Lists.definition ++
+    Strings.definition
   def rules = objStructureDefs ++ judgementProperties ++ Naturals.rules
 
   // should be true of any objcts that this applies to
