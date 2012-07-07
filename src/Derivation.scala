@@ -47,6 +47,7 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
 
   // check whether we are checking for derivability or admissibality and adjust rule set accordingly
   theorem match {
+    // TODO: derivable judgements that rely on rules which contain statements of derivability seem not to work
     case Derivable(h, s)  ⇒ { context ++= h.map(Axiom(_)); theorem = s }
     // TODO: exhaustively show all derivations for sure
     case Admissable(h, s) ⇒ null
@@ -59,12 +60,17 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
   // complex type allowing reasons to be given for failure, read on exceptions/errors
   def backward(): Derivation = {
     var derivation: Derivation = null
-    for (rule ← context) {
-      val j: Judgement = rule.statement
+    for (r ← context) {
+      var rule: Rule = r
 
-      if (theorem.symbol == j.symbol) {
+      // when proving a statement of derivability match with rules of derivability 
+      if ("⊢" == rule.statement.symbol) rule.statement match {
+        case Derivable(h, s) ⇒ { rule = InferenceRule(h, s) }
+      }
+
+      if (theorem.symbol == rule.statement.symbol) {
         try {
-          val varValues: Objct#EnvMap = j.matchVarObj(emptyEnv, theorem)
+          val varValues: Objct#EnvMap = rule.statement.matchVarObj(emptyEnv, theorem)
 
           rule match {
             case Axiom(a) ⇒ {
@@ -100,10 +106,10 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
   // will we leave typing of objcts to the objct language? should we check this before searching?
   // should we then also do this check on backwards derivations?
   def forward(): Derivation = {
+    // TODO: merge with context? rename context?
     var validDerivations: Set[Derivation] = Set() // ATM this should store no objcts with vars
-    // (as far as i can figure, this will be
-    // necessary with hypothetical judgements but
-    // that is another day)
+    // as far as i can figure, this will be necessary with hypothetical judgements but
+    // that is another day, check what happens with parameteric judgements too
 
     // we need to check for valid objct structure
     //if (theorem.subjects.map(o => o.matchVarObj(Map((Var("a"), o)), o)))
