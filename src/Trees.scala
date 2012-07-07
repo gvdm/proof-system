@@ -21,7 +21,7 @@ case object Leaf extends Objct
 case class Branch(left: Objct, right: Objct) extends Objct {
   override def matchVarObj(e: EnvMap, o: Objct) = {
     o match {
-      case Branch(l, r) ⇒ e ++ left.matchVarObj(e, l) ++ (right.matchVarObj(e, r))
+      case Branch(l, r) ⇒ e ++ left.matchVarObj(e, l) ++ right.matchVarObj(e, r)
       case _            ⇒ throw IncorrectJudgemntObjct
     }
   }
