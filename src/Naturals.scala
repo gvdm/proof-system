@@ -22,8 +22,8 @@ case object Zero extends Objct
 case class Succ(pre: Objct) extends Objct {
   override def matchVarObj(e: EnvMap, o: Objct): EnvMap = {
     o match {
-      case Succ(n) ⇒ pre.matchVarObj(e, n)
-      case _       ⇒ throw IncorrectJudgemntObjct
+      case Succ(n) ⇒ pre.matchVarObj(e, n) // ++ e // TODO: is this needed? think
+      case _       ⇒ throw ObjctMismatch
     }
   }
   override def vars = pre.vars

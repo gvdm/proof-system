@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-object InvalidJudgementException extends Throwable
+case class InvalidJudgementException(reason: String) extends Throwable
 
 sealed abstract class NFix
 case object PreFix extends NFix
@@ -42,12 +42,12 @@ case class Judgement(symbol: String, subjects: List[Objct], fix: NFix = PreFix) 
           if (sharedVars != Set() && sharedVars.exists { v ⇒ varValues(v) != newVarAssignments(v) })
             throw VariableUniquenessException // came across a variable that was given different mappings
           if (thsub != obsub.replaceVars(newVarAssignments))
-            throw InvalidJudgementException
+            throw InvalidJudgementException("Judgements are not made on the same subjects")
           varValues = varValues ++ newVarAssignments
         }
         return varValues
-      } else throw IncorrectJudgemntObjct
-      case _ ⇒ throw IncorrectJudgemntObjct
+      } else throw InvalidJudgementException("Judgements are not the same (will this ever get called if symbols are always checked first? prereq?)")
+      case _ ⇒ throw ObjctMismatch
     }
   }
   override def vars = (subjects map { _.vars }) reduceLeft { _ ++ _ }

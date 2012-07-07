@@ -87,9 +87,9 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
           }
         } catch {
           // TODO: handle incorrectly formed expressions
-          case VariableUniquenessException ⇒ throw new Error("VariableUniquenessException")
-          case InvalidJudgementException   ⇒ null
-          case IncorrectJudgemntObjct      ⇒ null //return Derivation(theorem, Set(), Axiom(Judgement("⊥", List(theorem))))
+          case VariableUniquenessException       ⇒ throw new Error("VariableUniquenessException")
+          case InvalidJudgementException(reason) ⇒ null //println(reason) // will happen when judgements are applied to different object forms println("InvalidJudgementException")
+          case ObjctMismatch                     ⇒ null //println("IncorrectJudgemntObjct") //return Derivation(theorem, Set(), Axiom(Judgement("⊥", List(theorem))))
         }
       }
     }

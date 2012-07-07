@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-object IncorrectJudgemntObjct extends Throwable
+object ObjctMismatch extends Throwable
 object VariableUniquenessException /*(v:String, o1:String, o2:String)*/ extends Throwable
 
 abstract class ObjctDef {

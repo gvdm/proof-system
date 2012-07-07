@@ -22,7 +22,7 @@ case class Cons(head: Objct, tail: Objct) extends Objct {
   override def matchVarObj(e: EnvMap, o: Objct): EnvMap = {
     o match {
       case Cons(h, t) ⇒ e ++ head.matchVarObj(e, h) ++ (tail.matchVarObj(e, t))
-      case _          ⇒ throw IncorrectJudgemntObjct
+      case _          ⇒ throw ObjctMismatch
     }
   }
   override def vars = head.vars ++ tail.vars
