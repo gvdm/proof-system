@@ -58,7 +58,7 @@ case class StringCons(c: Objct, s: Objct) extends Objct {
 
   override def matchVarObj(e: EnvMap, o: Objct): EnvMap = {
     o match {
-      case StringCons(char, string) ⇒ c.matchVarObj(e, char) ++ char.matchVarObj(e, string)
+      case StringCons(char, string) ⇒ c.matchVarObj(e, char) ++ s.matchVarObj(e, string)
       case _                           ⇒ throw ObjctMismatch
     }
   }
