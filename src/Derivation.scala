@@ -59,7 +59,6 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
   // TODO: return type represent possible failure to derive, using Maybe or perhaps a more
   // complex type allowing reasons to be given for failure, read on exceptions/errors
   def backward(): Derivation = {
-    var derivation: Derivation = null
     for (r ← context) {
       var rule: Rule = r
 
@@ -99,7 +98,7 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
         }
       }
     }
-    return derivation
+    throw new Error("Did not find derivation of "+theorem)
   }
 
   // TODO: forward derivation will never stop if given an invalid object construction
@@ -111,7 +110,7 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
     // as far as i can figure, this will be necessary with hypothetical judgements but
     // that is another day, check what happens with parameteric judgements too
 
-    // we need to check for valid objct structure
+    // TODO: do we need to check for valid objct structure?
     //if (theorem.subjects.map(o => o.matchVarObj(Map((Var("a"), o)), o)))
 
     while (!validDerivations.exists(_.statement == theorem)) {
