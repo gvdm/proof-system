@@ -75,7 +75,7 @@ object StringCat {
 object Strings extends ObjctDef {
   val nullStr = Val("ε")
   val alphabetChars = ('a' to 'z') ++ ('A' to 'Z') toSet
-  val alphabet = alphabetChars map { c ⇒ Judgement("char", List(Val(c)), PostFix) }
+  val alphabet = alphabetChars map { c ⇒ Judgement("char", List(Character(Val(c))), PostFix) }
 
   def definition = Set(
     // string induction
