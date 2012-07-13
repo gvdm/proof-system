@@ -49,7 +49,7 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
   def derive() = null
 
   // TODO: return type represent possible failure to derive, using Maybe or perhaps a more
-  // complex type allowing reasons to be given for failure, read on exceptions/errors
+  // complex type allowing reasons to be given for failure, mabe using exceptions/errors
   def backward(): Derivation = {
     var theoremContext = context
 
@@ -124,6 +124,8 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
 
     // TODO: merge with context? rename context? filter context for relevant rules?
     var validDerivations: Set[Derivation] = Set()
+    // ATM this should store no objcts with vars as far as i can figure, this will be necessary
+    // with hypothetical atd/or parameteric judgements but that is another day
 
     theorem match {
       case Derivable(h, c) ⇒ derivationContext ++= h.map(Axiom(_))
@@ -177,11 +179,9 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
             //    case (env, ps) ⇒ new Derivation(conclusion.replaceVars(env),
             //      ps.map(p ⇒ validDerivations.find(p == _.statement).get))
             //  }
-
-            //premises.filter(p => if isDerivabilityJudgement(p) && )
+            // \/ should be equivalent to above ^^
+            
             val premiseStatements = derivableJudgementStatements(premises) toSet
-
-            // should be equivalent to above ^^
             val replacedPremises = environments.map(env ⇒ (env, premiseStatements.map(_.replaceVars(env))))
             replacedPremises.foreach { envPremises ⇒
               {
@@ -203,6 +203,12 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
 
   def isDerivabilityJudgement(j: Judgement): Boolean = j.symbol == "⊢"
 
+  // TODO: many of these helper functions deal with the conversion between the (nested) judgment of
+  // a statement of derivability and the flat structure of normal judgements. question: can we deal
+  // with this by overriding the statement definition in derivable judgements (without subclassing)
+  // much as we would like to do with printing out the hypothesis (especially when its an alphabet)
+  // This following helper function essentially flattens the view of judgements allowing you to
+  // treat derivable judgements as their consequents
   def derivableJudgement(derivable: Objct): Judgement = try {
     derivable match {
       // asInstanceOf should be safe as the Objcts in a ⊢ Judgement should be Judgements themselves
