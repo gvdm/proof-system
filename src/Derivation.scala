@@ -41,25 +41,24 @@ case class Derivation(statement: Judgement, derivations: Set[Derivation], reason
   }
 }
 
-class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
-  var theorem = theoremToProve
-  var context = contextToUse
-
-  // check whether we are checking for derivability or admissibality and adjust rule set accordingly
-  theorem match {
-    // TODO: derivable judgements that rely on rules which contain statements of derivability seem not to work
-    case Derivable(h, s)  ⇒ { context ++= h.map(Axiom(_)); theorem = s }
-    // TODO: exhaustively show all derivations for sure
-    case Admissable(h, s) ⇒ null
-    case _                ⇒ null
-  }
-
+class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
   def emptyEnv = new collection.immutable.HashMap[Var, Objct]
 
   // TODO: return type represent possible failure to derive, using Maybe or perhaps a more
   // complex type allowing reasons to be given for failure, read on exceptions/errors
   def backward(): Derivation = {
-    for (r ← context) {
+    var theoremToProve = theorem
+    var theoremContext = context
+    // check whether we are checking for derivability or admissibility and adjust rule set accordingly
+    theoremToProve match {
+      // TODO: derivable judgements that rely on rules which contain statements of derivability seem not to work
+      case Derivable(h, s)  ⇒ { theoremContext ++= h.map(Axiom(_)); theoremToProve = s }
+      // TODO: exhaustively show all derivations for sure
+      case Admissable(h, s) ⇒ null
+      case _                ⇒ null
+    }
+    
+    for (r ← theoremContext) {
       var rule: Rule = r
 
       // when proving a statement of derivability match with rules of derivability 
@@ -67,15 +66,15 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
         case Derivable(h, s) ⇒ { rule = InferenceRule(h, s) }
       }
 
-      if (theorem.symbol == rule.statement.symbol) {
+      if (theoremToProve.symbol == rule.statement.symbol) {
         try {
-          val varValues: Objct#EnvMap = rule.statement.matchVarObj(emptyEnv, theorem)
+          val varValues: Objct#EnvMap = rule.statement.matchVarObj(emptyEnv, theoremToProve)
 
           rule match {
             case Axiom(a) ⇒ {
               val derivedJudgement = a.replaceVars(varValues)
               // the axiom matches, are the objects in the judgement the same?
-              if (derivedJudgement.judge(theorem)) {
+              if (derivedJudgement.judge(theoremToProve)) {
                 // we have a derivation with no premises, end search
                 return Derivation(derivedJudgement, Set(), rule)
               }
@@ -86,7 +85,7 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
               // values given in the theorem
               val premisesReplaced = premises.map(_.replaceVars(varValues))
               // for each premise, find its derivation to complete the derivation for this theorem
-              return Derivation(theorem, premisesReplaced map (new Derive(_, context /*+Axiom(theorem) this will improve derivations as not having to reprove proven theorems*/ )
+              return Derivation(theoremToProve, premisesReplaced map (new Derive(_, context ++ ruleAxioms /*+Axiom(theorem) this will improve derivations as not having to reprove proven theorems*/ )
                 .backward), rule)
             }
           }
@@ -98,7 +97,7 @@ class Derive(theoremToProve: Judgement, contextToUse: Set[Rule] = Rules.rules) {
         }
       }
     }
-    throw new Error("Did not find derivation of "+theorem)
+    throw new Error("Did not find derivation of " + theorem)
   }
 
   // TODO: forward derivation will never stop if given an invalid object construction
