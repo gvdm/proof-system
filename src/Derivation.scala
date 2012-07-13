@@ -101,51 +101,71 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
   // will we leave typing of objcts to the objct language? should we check this before searching?
   // should we then also do this check on backwards derivations?
   def forward(): Derivation = {
-    // TODO: merge with context? rename context?
-    var validDerivations: Set[Derivation] = Set() // ATM this should store no objcts with vars
-    // as far as i can figure, this will be necessary with hypothetical judgements but
-    // that is another day, check what happens with parameteric judgements too
+    var derivationContext = context
+
+    /* filter rules to just the relevant ones */
+    def relevantRules(scope: Judgement, ruleSet: Set[Rule] = Set()): Set[Rule] = {
+      val scopeSymbol = judgementStatement(scope).symbol
+      // if we don't already have the rule as relevant
+      derivationContext.filter(rule ⇒ !(ruleSet contains rule) &&
+        // and the judgement is the same
+        (rule.statement.symbol == scopeSymbol ||
+          // or if the rule has a ⊢ judgement as the statement, then check the judgement that the ⊢ judgement has as its consequent
+          (isDerivabilityJudgement(rule.statement) && derivableJudgement(rule.statement).symbol == scopeSymbol))
+      ).map {
+        // then add it
+        _ match {
+          case a: Axiom            ⇒ Set(a): Set[Rule]
+          // and all the rules that may apply to their premises
+          case rule: InferenceRule ⇒ Set(rule) ++ rule.premises.flatMap { relevantRules(_, ruleSet + rule) }: Set[Rule]
+        }
+      }.foldLeft(Set[Rule]()) { _ ++ _ } // as one set
+    }
+
+    // TODO: merge with context? rename context? filter context for relevant rules?
+    var validDerivations: Set[Derivation] = Set()
+
+    theorem match {
+      case Derivable(h, c) ⇒ derivationContext ++= h.map(Axiom(_))
+      case _               ⇒ Unit
+    }
+
+    def derivedJudgements = validDerivations.map(_.statement).map(p ⇒ p match {
+      case Derivable(h, c) ⇒ h + c
+      case _               ⇒ Set(p)
+    }).flatten
 
     // TODO: do we need to check for valid objct structure?
     //if (theorem.subjects.map(o => o.matchVarObj(Map((Var("a"), o)), o)))
 
-    while (!validDerivations.exists(_.statement == theorem)) {
+    while (!validDerivations.exists(d ⇒ judgementStatement(d.statement) == judgementStatement(theorem))) {
       // accumulate the derivations that are found in the iteration instead of adding immediately
       // to the set of valid derivations so that ordering of rules does not affect search priority
       // (not doing so results in a deep search on the first few rules)
       var newDerivations: Set[Derivation] = Set()
-
-      // filter rules to just the relevant ones
-      def relevantRules(scope: Judgement, ruleSet: Set[Rule] = Set()): Set[Rule] = {
-        // if we don't already have the rule as relevant and the judgement is the same add it
-        context.filter(rule ⇒ !(ruleSet contains rule) && rule.statement.symbol == scope.symbol).map {
-          _ match {
-            case a: Axiom            ⇒ Set(a): Set[Rule]
-            // and all the rules that may apply to their premises
-            case rule: InferenceRule ⇒ Set(rule) ++ rule.premises.flatMap { relevantRules(_, ruleSet + rule) }: Set[Rule]
-          }
-        }.foldLeft(Set[Rule]()) { _ ++ _ } // as one set
-      }
-
       for (rule ← relevantRules(theorem)) {
 
         val variables = rule.statement.subjects.flatMap(_.vars) toSet // same as distinct, but maybe makes it faster?
+        // get all objcts from the subjcts of derived judgements
+        // when working with derivability judgements pull out all the subjects of the judgements in the judgement
+        val objcts = validDerivations.map(d ⇒ if (isDerivabilityJudgement(d.statement)) d.statement.subjects.map(_.asInstanceOf[Judgement])
+        else List(d.statement)
+        ).flatten.flatMap(_.subjects)
 
         // for every variable, map to every object (that has been seen in validDerivations)
-        // the cartesian product of variables and objcts gives all the possible combinations 
+        // the cartesian product of variables and objcts gives all the possible combinations
         // then we construct every unique grouping of variables to create environments that map variables
         // uniquely and cover every object
         var varReplacements: Traversable[Traversable[(Var, Objct)]] = Traversable(Traversable())
-        for (v ← cartesianProduct(variables, validDerivations.map(_.statement).flatMap(_.subjects))) {
+        for (v ← cartesianProduct(variables, objcts)) {
           varReplacements = v.flatMap(vo ⇒ varReplacements.map(_ ++ Set(vo))) toSet
         } // varReplacements is now objects^variables large, luckily, most rules do not use /too/ many vars
 
-        // can't work due to semi recursive/iterative nature of building unique var lists, henc above implementation
-        //        val varReplacements = cartesianProduct(variables, validDerivations.map(_.statement).flatMap(_.subjects)).map(_.flatMap(vo ⇒ varReplacements.map(_ ++ Set(vo))))
+        // can't work due to semi recursive/iterative nature of building unique var lists, hence above implementation
+        //val varReplacements = cartesianProduct(variables, validDerivations.map(_.statement).flatMap(_.subjects)).map(_.flatMap(vo ⇒ varReplacements.map(_ ++ Set(vo))))
 
         // create a new environment for every possible mapping
         val environments = varReplacements.map(_.foldLeft(emptyEnv)((env, varObjTuple) ⇒ env + (varObjTuple._1 -> varObjTuple._2)))
-
         rule match {
           case Axiom(a) ⇒ environments.foreach { env ⇒ newDerivations += Derivation(a.replaceVars(env), Set(), rule) }
           case InferenceRule(premises, conclusion) ⇒ {
@@ -158,13 +178,18 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
             //      ps.map(p ⇒ validDerivations.find(p == _.statement).get))
             //  }
 
-            // should be equivalent to above ^^s 
-            val replacedPremises = environments.map(env ⇒ (env, premises.map(_.replaceVars(env))))
+            //premises.filter(p => if isDerivabilityJudgement(p) && )
+            val premiseStatements = derivableJudgementStatements(premises) toSet
+
+            // should be equivalent to above ^^
+            val replacedPremises = environments.map(env ⇒ (env, premiseStatements.map(_.replaceVars(env))))
             replacedPremises.foreach { envPremises ⇒
               {
-                if (envPremises._2.subsetOf(validDerivations.map(_.statement))) {
-                  newDerivations += Derivation(conclusion.replaceVars(envPremises._1),
-                    envPremises._2.map(p ⇒ validDerivations.find(p == _.statement).get), rule)
+                // if the premises have already been derived
+                if (envPremises._2.subsetOf(derivedJudgements)) {
+                  newDerivations += Derivation(judgementStatement(conclusion).replaceVars(envPremises._1),
+                    envPremises._2.map(p ⇒ validDerivations.find(d ⇒ p == judgementStatement(d.statement))
+                      .get), rule)
                 }
               }
             }
@@ -173,7 +198,7 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
       }
       validDerivations ++= newDerivations
     }
-    return validDerivations.find(_.statement == theorem).get
+    return validDerivations.find(d ⇒ judgementStatement(d.statement) == judgementStatement(theorem)).get
   }
 
   def isDerivabilityJudgement(j: Judgement): Boolean = j.symbol == "⊢"
