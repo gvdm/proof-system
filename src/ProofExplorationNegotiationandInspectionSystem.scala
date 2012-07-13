@@ -43,7 +43,8 @@ object ProofExplorationNegotiationandInspectionSystem {
     Judgement("even", List(Succ(Succ(Zero)))),
     Judgement("odd", List(Succ(Succ(Succ(Zero))))),
     Judgement("max", List(Succ(Zero), Succ(Succ(Zero)), Succ(Succ(Zero)))),
-    Judgement("max", List(Succ(Succ(Succ(Zero))), Succ(Succ(Zero)), Succ(Succ(Succ(Zero)))))
+    Judgement("max", List(Succ(Succ(Succ(Zero))), Succ(Succ(Zero)), Succ(Succ(Succ(Zero))))),
+    Str(StringCons(Character(Val('s')), Strings.nullStr))
   )
 
   val invalid = List(
