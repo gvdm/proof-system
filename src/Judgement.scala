@@ -77,11 +77,9 @@ object Derivable {
     Judgement("⊢", (hypothesis toList) :+ consequent, LastFix)
   def unapply(j: Judgement): Option[(Set[Judgement], Judgement)] = {
     if (j.symbol == "⊢") try {
-      Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet,
-        j.subjects.last.asInstanceOf[Judgement]))
+      Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet, j.subjects.last.asInstanceOf[Judgement]))
     } catch {
-      // TODO: fix to be correct exception for failed cast
-      case a: IllegalAccessError ⇒ None
+      case e: ClassCastException ⇒ throw InvalidJudgementException("Derivablility judgement does not have judgements as subjects")
     }
     else None
   }
@@ -97,11 +95,10 @@ object Admissable {
   def apply(hypothesis: Judgement, consequent: Judgement) = Judgement("⊨", List(hypothesis, consequent), LastFix)
   def apply(hypothesis: List[Judgement], consequent: Judgement) = Judgement("⊨", hypothesis :+ consequent, LastFix)
   def unapply(j: Judgement): Option[(Set[Judgement], Judgement)] = {
-    if (j.symbol == "⊢") try {
+    if (j.symbol == "⊨") try {
       Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet, j.subjects.last.asInstanceOf[Judgement]))
     } catch {
-      // TODO: fix to be correct exception for failed cast
-      case a: IllegalAccessError ⇒ None
+      case e: ClassCastException ⇒ throw InvalidJudgementException("Derivablility judgement does not have judgements as subjects")
     }
     else None
   }
@@ -112,7 +109,18 @@ object Parametric {
   def apply(params: Set[Var], j: Judgement) = Judgement("|", (params toList) :+ j, LastFix)
 }
 
-object Eq { def apply(a: Objct, b: Objct) = Judgement("=", List(a, b)) }
+object Eq {
+  def apply(a: Objct, b: Objct) = Judgement("=", List(a, b), InFix)
+//  def unapply(o: Objct): Option[Judgement] = o match {
+//    case j@Judgement("=", subs, fix) ⇒ Some(j)
+//    case _                           ⇒ None
+//  }
+//  def unapply(s: String): Option[Judgement] = try {
+//    Some(Judgement("=", List(s.split("=")(0), s.split("=")(1)), InFix))
+//  } catch {
+//    case _ => None
+//  }
+}
 
 object IsType { def apply(typ: Objct) = Judgement("type", List(typ), PostFix) }
 object HasType { def apply(expression: Objct, typ: Objct) = Judgement(":", List(expression, typ), InFix) }
