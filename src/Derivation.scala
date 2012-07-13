@@ -44,6 +44,10 @@ case class Derivation(statement: Judgement, derivations: Set[Derivation], reason
 class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
   def emptyEnv = new collection.immutable.HashMap[Var, Objct]
 
+  // TODO: start a thread doing forward and backwards derivation and return whichever finishes first
+  // what about checking forward and backward match?
+  def derive() = null
+
   // TODO: return type represent possible failure to derive, using Maybe or perhaps a more
   // complex type allowing reasons to be given for failure, read on exceptions/errors
   def backward(): Derivation = {
@@ -92,7 +96,8 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
         } catch {
           // TODO: handle incorrectly formed expressions
           case VariableUniquenessException       ⇒ throw new Error("VariableUniquenessException")
-          case InvalidJudgementException(reason) ⇒ null //println(reason) // will happen when judgements are applied to different object forms println("InvalidJudgementException")
+          // will happen when judgements are applied to different objct forms
+          case InvalidJudgementException(reason) ⇒ null //println(reason)
           case ObjctMismatch                     ⇒ null //println("IncorrectJudgemntObjct") //return Derivation(theorem, Set(), Axiom(Judgement("⊥", List(theorem))))
         }
       }
