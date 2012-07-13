@@ -53,6 +53,7 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
   def backward(): Derivation = {
     var theoremToProve = theorem
     var theoremContext = context
+
     // check whether we are checking for derivability or admissibility and adjust rule set accordingly
     theoremToProve match {
       // TODO: derivable judgements that rely on rules which contain statements of derivability seem not to work
@@ -61,13 +62,26 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
       case Admissable(h, s) ⇒ null
       case _                ⇒ null
     }
-    
+
     for (r ← theoremContext) {
       var rule: Rule = r
 
-      // when proving a statement of derivability match with rules of derivability 
-      if ("⊢" == rule.statement.symbol) rule.statement match {
-        case Derivable(h, s) ⇒ { rule = InferenceRule(h, s) }
+      // treat rules with derivability judgements as inference rules
+      if (isDerivabilityJudgement(rule.statement)) {
+        var derivabilityPremises: Set[Judgement] = Set()
+        var derivabilityConclusion: Judgement = null
+        rule match {
+          case Axiom(axiom) ⇒ axiom match {
+            case Derivable(h, c) ⇒ { derivabilityPremises = h; derivabilityConclusion = c }
+            case _               ⇒ throw InvalidJudgementException("We checked it was derivable so this shouldn't be able to happen")
+          }
+          case InferenceRule(premises, conclusion) ⇒ conclusion match {
+            // TODO: I'm pretty sure that if we have derivability statements as premises this will work, check sometime (12/7/12 - if it ain't a problem it ain't a problem)
+            case Derivable(h, c) ⇒ { theoremContext ++= h.map(Axiom(_)); derivabilityPremises = premises; derivabilityConclusion = c }
+            case _               ⇒ throw InvalidJudgementException("We checked it was derivable so this shouldn't be able to happen")
+          }
+        }
+        rule = InferenceRule(derivabilityPremises, derivabilityConclusion)
       }
 
       if (theoremToProve.symbol == rule.statement.symbol) {
@@ -89,7 +103,7 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
               // values given in the theorem
               val premisesReplaced = premises.map(_.replaceVars(varValues))
               // for each premise, find its derivation to complete the derivation for this theorem
-              return Derivation(theoremToProve, premisesReplaced map (new Derive(_, context ++ ruleAxioms /*+Axiom(theorem) this will improve derivations as not having to reprove proven theorems*/ )
+              return Derivation(theoremToProve, premisesReplaced map (new Derive(_, theoremContext /*+Axiom(theorem) this will improve derivations as not having to reprove proven theorems*/ )
                 .backward), rule)
             }
           }
@@ -183,4 +197,22 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
     }
     return validDerivations.find(_.statement == theorem).get
   }
+
+  def isDerivabilityJudgement(j: Judgement): Boolean = j.symbol == "⊢"
+
+  def derivableJudgement(derivable: Objct): Judgement = try {
+    derivable match {
+      // asInstanceOf should be safe as the Objcts in a ⊢ Judgement should be Judgements themselves
+      case Judgement("⊢", subs, fix) ⇒ subs.last.asInstanceOf[Judgement]
+      case _                         ⇒ throw InvalidJudgementException("Objct is not a derivability judgement")
+    }
+  } catch {
+    // but if it isn't we throw a nice exception
+    case e: ClassCastException ⇒ throw InvalidJudgementException("Derivablility judgement does not have judgements as subjects")
+  }
+
+  // because we want to uniformly handle derivable statements
+  def judgementStatement(j: Judgement) = if (isDerivabilityJudgement(j)) derivableJudgement(j) else j
+
+  def derivableJudgementStatements(js: Traversable[Judgement]) = js.map(judgementStatement(_))
 }
