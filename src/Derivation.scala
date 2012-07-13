@@ -51,48 +51,26 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
   // TODO: return type represent possible failure to derive, using Maybe or perhaps a more
   // complex type allowing reasons to be given for failure, read on exceptions/errors
   def backward(): Derivation = {
-    var theoremToProve = theorem
     var theoremContext = context
 
     // check whether we are checking for derivability or admissibility and adjust rule set accordingly
-    theoremToProve match {
-      // TODO: derivable judgements that rely on rules which contain statements of derivability seem not to work
-      case Derivable(h, s)  ⇒ { theoremContext ++= h.map(Axiom(_)); theoremToProve = s }
+    theorem match {
+      case Derivable(h, s)  ⇒ { theoremContext ++= h.map(Axiom(_)); /*theoremToProve = s*/ }
       // TODO: exhaustively show all derivations for sure
       case Admissable(h, s) ⇒ null
       case _                ⇒ null
     }
 
-    for (r ← theoremContext) {
-      var rule: Rule = r
-
-      // treat rules with derivability judgements as inference rules
-      if (isDerivabilityJudgement(rule.statement)) {
-        var derivabilityPremises: Set[Judgement] = Set()
-        var derivabilityConclusion: Judgement = null
-        rule match {
-          case Axiom(axiom) ⇒ axiom match {
-            case Derivable(h, c) ⇒ { derivabilityPremises = h; derivabilityConclusion = c }
-            case _               ⇒ throw InvalidJudgementException("We checked it was derivable so this shouldn't be able to happen")
-          }
-          case InferenceRule(premises, conclusion) ⇒ conclusion match {
-            // TODO: I'm pretty sure that if we have derivability statements as premises this will work, check sometime (12/7/12 - if it ain't a problem it ain't a problem)
-            case Derivable(h, c) ⇒ { theoremContext ++= h.map(Axiom(_)); derivabilityPremises = premises; derivabilityConclusion = c }
-            case _               ⇒ throw InvalidJudgementException("We checked it was derivable so this shouldn't be able to happen")
-          }
-        }
-        rule = InferenceRule(derivabilityPremises, derivabilityConclusion)
-      }
-
-      if (theoremToProve.symbol == rule.statement.symbol) {
+    for (rule ← theoremContext) {
+      if (judgementStatement(theorem).symbol == judgementStatement(rule.statement).symbol) {
         try {
-          val varValues: Objct#EnvMap = rule.statement.matchVarObj(emptyEnv, theoremToProve)
+          val varValues: Objct#EnvMap = judgementStatement(rule.statement).matchVarObj(emptyEnv, judgementStatement(theorem))
 
           rule match {
             case Axiom(a) ⇒ {
               val derivedJudgement = a.replaceVars(varValues)
               // the axiom matches, are the objects in the judgement the same?
-              if (derivedJudgement.judge(theoremToProve)) {
+              if (judgementStatement(derivedJudgement).judge(judgementStatement(theorem))) {
                 // we have a derivation with no premises, end search
                 return Derivation(derivedJudgement, Set(), rule)
               }
@@ -103,7 +81,7 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
               // values given in the theorem
               val premisesReplaced = premises.map(_.replaceVars(varValues))
               // for each premise, find its derivation to complete the derivation for this theorem
-              return Derivation(theoremToProve, premisesReplaced map (new Derive(_, theoremContext /*+Axiom(theorem) this will improve derivations as not having to reprove proven theorems*/ )
+              return Derivation(judgementStatement(theorem), premisesReplaced map (new Derive(_, theoremContext /*+Axiom(theorem) this will improve derivations as not having to reprove proven theorems*/ )
                 .backward), rule)
             }
           }
