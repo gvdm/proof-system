@@ -30,10 +30,10 @@ object Chr {
 object Str {
   def apply(s: Objct, Σ: Set[Judgement] = Strings.alphabet) =
     Derivable(Σ, Judgement("str", List(s), PostFix))
-//  def apply(c: Objct, s: Objct, Σ: Set[Judgement]) =
-//    Derivable(Σ, Judgement("str", List(c, s), PostFix))
+  //def apply(c: Objct, s: Objct, Σ: Set[Judgement]) =
+  //  Derivable(Σ, Judgement("str", List(c, s), PostFix))
 
-  //  def unapply(o: Objct): Option[] = o 
+  //  def unapply(o: Objct): Option[] = o
 }
 
 case class Character(c: Objct) extends Objct {
@@ -44,7 +44,7 @@ case class Character(c: Objct) extends Objct {
 
   override def matchVarObj(e: EnvMap, o: Objct): EnvMap = o match {
     case Character(d) ⇒ c.matchVarObj(e, d)
-    case _               ⇒ throw ObjctMismatch
+    case _            ⇒ throw ObjctMismatch
   }
 
   override def vars = c match {
@@ -59,11 +59,17 @@ case class StringCons(c: Objct, s: Objct) extends Objct {
   override def matchVarObj(e: EnvMap, o: Objct): EnvMap = {
     o match {
       case StringCons(char, string) ⇒ c.matchVarObj(e, char) ++ s.matchVarObj(e, string)
-      case _                           ⇒ throw ObjctMismatch
+      case _                        ⇒ throw ObjctMismatch
     }
   }
   override def vars = c.vars ++ s.vars
   override def replaceVars(e: EnvMap): Objct = StringCons(c.replaceVars(e), s.replaceVars(e))
+}
+
+object StringObjct {
+  def apply(str: String): Objct =
+    if (str == "") Strings.nullStr
+    else StringCons(Character(Val(str.head)), StringObjct(str.tail))
 }
 
 object StringCat {
@@ -83,7 +89,7 @@ object Strings extends ObjctDef {
     InferenceRule(Set(Chr(Var("c")), Str(Var("s"))),
       Str(StringCons(Var("c"), Var("s"))))
   )
-  
+
   /* TODO: should we rework the rules to include 'type restraints' in the form of type
      judgements in the premises (change the axiom to inference rule). PFFP seems loose
      and fast in there definitions with liberal use of syntax, mixing in char/str/nat into
