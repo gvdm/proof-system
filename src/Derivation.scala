@@ -41,8 +41,36 @@ case class Derivation(statement: Judgement, derivations: Set[Derivation], reason
   }
 }
 
+// TODO: do we need to check for valid objct structure?
 class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
+  // check whether we are checking for derivability or admissibility and adjust rule set accordingly
+  val derivationContext = context ++ (theorem match {
+    case Derivable(h, c)  ⇒ h.map(Axiom(_))
+    // TODO: exhaustively show all derivations for sure
+    case Admissable(h, c) ⇒ Set()
+    case _                ⇒ Set()
+  })
+
   def emptyEnv = new collection.immutable.HashMap[Var, Objct]
+
+  /* given a judgement recursively filter rules to just the relevant ones */
+  def relevantRules(scope: Judgement = theorem, ruleSet: Set[Rule] = Set()): Set[Rule] = {
+    val scopeSymbol = judgementStatement(scope).symbol
+    // if we don't already have the rule as relevant
+    derivationContext.filter(rule ⇒ !(ruleSet contains rule) &&
+      // and the judgement is the same
+      (rule.statement.symbol == scopeSymbol ||
+        // or if the rule has a ⊢ judgement as the statement, then check the judgement that the ⊢ judgement has as its consequent
+        (isDerivabilityJudgement(rule.statement) && derivableJudgement(rule.statement).symbol == scopeSymbol))
+    ).map {
+      // then add it
+      _ match {
+        case a: Axiom            ⇒ Set(a): Set[Rule]
+        // and all the rules that may apply to their premises
+        case rule: InferenceRule ⇒ Set(rule) ++ rule.premises.flatMap { relevantRules(_, ruleSet + rule) }: Set[Rule]
+      }
+    }.foldLeft(Set[Rule]()) { _ ++ _ } // as one set
+  }
 
   // TODO: start a thread doing forward and backwards derivation and return whichever finishes first
   // what about checking forward and backward match?
@@ -51,17 +79,8 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
   // TODO: return type represent possible failure to derive, using Maybe or perhaps a more
   // complex type allowing reasons to be given for failure, mabe using exceptions/errors
   def backward(): Derivation = {
-    var theoremContext = context
 
-    // check whether we are checking for derivability or admissibility and adjust rule set accordingly
-    theorem match {
-      case Derivable(h, s)  ⇒ { theoremContext ++= h.map(Axiom(_)); /*theoremToProve = s*/ }
-      // TODO: exhaustively show all derivations for sure
-      case Admissable(h, s) ⇒ null
-      case _                ⇒ null
-    }
-
-    for (rule ← theoremContext) {
+    for (rule ← relevantRules()) {
       if (judgementStatement(theorem).symbol == judgementStatement(rule.statement).symbol) {
         try {
           val varValues: Objct#EnvMap = judgementStatement(rule.statement).matchVarObj(emptyEnv, judgementStatement(theorem))
@@ -81,7 +100,7 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
               // values given in the theorem
               val premisesReplaced = premises.map(_.replaceVars(varValues))
               // for each premise, find its derivation to complete the derivation for this theorem
-              return Derivation(judgementStatement(theorem), premisesReplaced map (new Derive(_, theoremContext /*+Axiom(theorem) this will improve derivations as not having to reprove proven theorems*/ )
+              return Derivation(judgementStatement(theorem), premisesReplaced map (new Derive(_, derivationContext /*+Axiom(theorem) this will improve derivations as not having to reprove proven theorems*/ )
                 .backward), rule)
             }
           }
@@ -101,51 +120,23 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
   // will we leave typing of objcts to the objct language? should we check this before searching?
   // should we then also do this check on backwards derivations?
   def forward(): Derivation = {
-    var derivationContext = context
-
-    /* filter rules to just the relevant ones */
-    def relevantRules(scope: Judgement, ruleSet: Set[Rule] = Set()): Set[Rule] = {
-      val scopeSymbol = judgementStatement(scope).symbol
-      // if we don't already have the rule as relevant
-      derivationContext.filter(rule ⇒ !(ruleSet contains rule) &&
-        // and the judgement is the same
-        (rule.statement.symbol == scopeSymbol ||
-          // or if the rule has a ⊢ judgement as the statement, then check the judgement that the ⊢ judgement has as its consequent
-          (isDerivabilityJudgement(rule.statement) && derivableJudgement(rule.statement).symbol == scopeSymbol))
-      ).map {
-        // then add it
-        _ match {
-          case a: Axiom            ⇒ Set(a): Set[Rule]
-          // and all the rules that may apply to their premises
-          case rule: InferenceRule ⇒ Set(rule) ++ rule.premises.flatMap { relevantRules(_, ruleSet + rule) }: Set[Rule]
-        }
-      }.foldLeft(Set[Rule]()) { _ ++ _ } // as one set
-    }
-
     // TODO: merge with context? rename context? filter context for relevant rules?
     var validDerivations: Set[Derivation] = Set()
     // ATM this should store no objcts with vars as far as i can figure, this will be necessary
     // with hypothetical atd/or parameteric judgements but that is another day
 
-    theorem match {
-      case Derivable(h, c) ⇒ derivationContext ++= h.map(Axiom(_))
-      case _               ⇒ Unit
-    }
-
+    /* collect all derivability hypotheses along with their conclusions into a homogenous collection */
     def derivedJudgements = validDerivations.map(_.statement).map(p ⇒ p match {
       case Derivable(h, c) ⇒ h + c
       case _               ⇒ Set(p)
     }).flatten
-
-    // TODO: do we need to check for valid objct structure?
-    //if (theorem.subjects.map(o => o.matchVarObj(Map((Var("a"), o)), o)))
 
     while (!validDerivations.exists(d ⇒ judgementStatement(d.statement) == judgementStatement(theorem))) {
       // accumulate the derivations that are found in the iteration instead of adding immediately
       // to the set of valid derivations so that ordering of rules does not affect search priority
       // (not doing so results in a deep search on the first few rules)
       var newDerivations: Set[Derivation] = Set()
-      for (rule ← relevantRules(theorem)) {
+      for (rule ← relevantRules()) {
 
         val variables = rule.statement.subjects.flatMap(_.vars) toSet // same as distinct, but maybe makes it faster?
         // get all objcts from the subjcts of derived judgements
@@ -180,7 +171,7 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
             //      ps.map(p ⇒ validDerivations.find(p == _.statement).get))
             //  }
             // \/ should be equivalent to above ^^
-            
+
             val premiseStatements = derivableJudgementStatements(premises) toSet
             val replacedPremises = environments.map(env ⇒ (env, premiseStatements.map(_.replaceVars(env))))
             replacedPremises.foreach { envPremises ⇒
