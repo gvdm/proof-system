@@ -31,14 +31,12 @@ case class Axiom(axiom: Judgement) extends Rule(axiom) {
 //}
 
 object Rules {
-  // TODO: find a code pattern to combine all the definitions and rules of subclasses of ObjctDef
-  // as to not have to update here when adding new types
-  def objStructureDefs =
-    Naturals.definition ++
-    Trees.definition ++
-    Lists.definition ++
-    Strings.definition
-  def rules = objStructureDefs ++ judgementProperties ++ Naturals.rules
+  // TODO: find a code pattern to collect all subclasses of ObjctDef so as to not have to update
+  // here when adding new types
+  def objctTypes = Set(Naturals, Trees, Lists, Strings)
+  
+  def objStructureDefs = objctTypes.map(_.definition).flatten
+  def rules = objStructureDefs ++ objctTypes.map(_.rules).flatten// ++ judgementProperties
 
   // should be true of any objcts that this applies to
   // TODO: think about the consequences of judgement overloading
