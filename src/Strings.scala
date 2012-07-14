@@ -97,7 +97,9 @@ object Strings extends ObjctDef {
      inference rules with type constraints */
   def rules = Set(
     // string concatenation
-    Axiom(StringCat(nullStr, Var("s"), Str(Var("s")))),
+    //Axiom(StringCat(nullStr, Var("s"), Var("s"))),
+    InferenceRule(Set(Str(Var("s"))),
+        StringCat(nullStr, Var("s"), Var("s"))),
     InferenceRule(Set(StringCat(Var("s1"), Var("s2"), Var("s"))),
       StringCat(StringCons(Var("c"), Var("s1")), Var("s2"), StringCons(Var("c"), Var("s"))))
   )
