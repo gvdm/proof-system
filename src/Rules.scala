@@ -42,7 +42,8 @@ object Rules {
 
   // should be true of any objcts that this applies to
   // TODO: think about the consequences of judgement overloading
-  def judgementProperties = Set(
-    Axiom(Eq(Var("a"), Var("a")))
-  )
+  // found a consequence, equivalency is not the same as identity, and variables should map to a unique objct
+  //def judgementProperties = Set(
+  //  Axiom(Eq(Var("a"), Var("a")))
+  //)
 }
