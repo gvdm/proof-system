@@ -19,7 +19,7 @@
 object ProofExplorationNegotiationandInspectionSystem {
 
   def main(args: Array[String]) {
-    valid ::: derivable foreach { theorem ⇒
+    valid foreach { theorem ⇒
       {
         println("Deriving: " + theorem)
         val d = new Derive(theorem)
@@ -31,20 +31,19 @@ object ProofExplorationNegotiationandInspectionSystem {
       }
     }
   }
-
-  val derivable = List(Derivable(Nat(Val("junk")), Nat(Succ(Succ(Val("junk"))))))
   
   val valid = List(
     Nat(Succ(Succ(Succ(Zero)))),
     Tr(Branch(Branch(Leaf, Leaf), Leaf)),
-    Sum(Zero,Zero,Zero),
+    Sum(Zero, Zero, Zero),
     Sum(Succ(Zero), Succ(Succ(Zero)), Succ(Succ(Succ(Zero)))),
     Sum(Succ(Zero), Zero, Succ(Zero)),
     Judgement("even", List(Succ(Succ(Zero)))),
     Judgement("odd", List(Succ(Succ(Succ(Zero))))),
     Judgement("max", List(Succ(Zero), Succ(Succ(Zero)), Succ(Succ(Zero)))),
     Judgement("max", List(Succ(Succ(Succ(Zero))), Succ(Succ(Zero)), Succ(Succ(Succ(Zero))))),
-    Str(StringCons(Character(Val('s')), Strings.nullStr))
+    Derivable(Nat(Val("junk")), Nat(Succ(Succ(Val("junk"))))),
+    Str(StringCons(Character(Val('s')), Strings.nullStr)),
   )
 
   val invalid = List(
