@@ -21,20 +21,22 @@ sealed abstract class NFix
 case object PreFix extends NFix
 case object InFix extends NFix
 case object LastFix extends NFix
+case object DerivFix extends NFix
 case object PostFix extends NFix
 
 // TODO: change to extractor pattern
-case class Judgement(symbol: String, subjects: List[Objct], fix: NFix = PreFix) extends Objct {
+case class Judgement(symbol: String, subjects: List[Objct], fix: NFix = PreFix, derivSymbol: String = null) extends Objct {
   override def toString() = fix match {
-    case PreFix  ⇒ symbol + "(" + subjects.mkString(", ") + ")"
-    case InFix   ⇒ subjects.head + " " + symbol + " " + subjects.tail.mkString(", ")
-    case LastFix ⇒ subjects.init.mkString(", ") + " " + symbol + " " + subjects.last
-    case PostFix ⇒ subjects.mkString + " " + symbol
+    case PreFix   ⇒ symbol + "(" + subjects.mkString(", ") + ")"
+    case InFix    ⇒ subjects.head + " " + symbol + " " + subjects.tail.mkString(", ")
+    case LastFix  ⇒ subjects.init.mkString(", ") + " " + symbol + " " + subjects.last
+    case DerivFix ⇒ (if (derivSymbol == null) "Γ" else derivSymbol) + " " + symbol + " " + subjects.last
+    case PostFix  ⇒ subjects.mkString + " " + symbol
   }
 
   override def matchVarObj(e: EnvMap, o: Objct): EnvMap = {
     o match {
-      case Judgement(sym, subs, fix) ⇒ if (sym == symbol) {
+      case Judgement(sym, subs, fix, dsym) ⇒ if (sym == symbol) {
         var varValues: EnvMap = new collection.immutable.HashMap[Var, Objct]
         for ((obsub, thsub) ← subjects zip subs) {
           val newVarAssignments = obsub.matchVarObj(varValues, thsub)
@@ -72,9 +74,15 @@ case class Judgement(symbol: String, subjects: List[Objct], fix: NFix = PreFix) 
 
 object Derivable {
   def apply(hypothesis: Judgement, consequent: Judgement) =
-    Judgement("⊢", List(hypothesis, consequent), LastFix)
+    deriveJudgement(List(hypothesis), consequent)
   def apply(hypothesis: Set[Judgement], consequent: Judgement) =
-    Judgement("⊢", (hypothesis toList) :+ consequent, LastFix)
+    deriveJudgement((hypothesis toList), consequent)
+  def apply(hypothesis: Set[Judgement], consequent: Judgement, derivSymbol: String) =
+    deriveJudgement((hypothesis toList), consequent, derivSymbol)
+    
+  def deriveJudgement(hypothesis: List[Judgement], consequent: Judgement, derivSymbol: String = null) =
+    Judgement("⊢", hypothesis :+ consequent, if (derivSymbol != null) DerivFix else LastFix, derivSymbol)
+    
   def unapply(j: Judgement): Option[(Set[Judgement], Judgement)] = {
     if (j.symbol == "⊢") try {
       Some((j.subjects.init.map(_.asInstanceOf[Judgement]) toSet, j.subjects.last.asInstanceOf[Judgement]))
@@ -111,15 +119,15 @@ object Parametric {
 
 object Eq {
   def apply(a: Objct, b: Objct) = Judgement("=", List(a, b), InFix)
-//  def unapply(o: Objct): Option[Judgement] = o match {
-//    case j@Judgement("=", subs, fix) ⇒ Some(j)
-//    case _                           ⇒ None
-//  }
-//  def unapply(s: String): Option[Judgement] = try {
-//    Some(Judgement("=", List(s.split("=")(0), s.split("=")(1)), InFix))
-//  } catch {
-//    case _ => None
-//  }
+  //  def unapply(o: Objct): Option[Judgement] = o match {
+  //    case j@Judgement("=", subs, fix) ⇒ Some(j)
+  //    case _                           ⇒ None
+  //  }
+  //  def unapply(s: String): Option[Judgement] = try {
+  //    Some(Judgement("=", List(s.split("=")(0), s.split("=")(1)), InFix))
+  //  } catch {
+  //    case _ => None
+  //  }
 }
 
 object IsType { def apply(typ: Objct) = Judgement("type", List(typ), PostFix) }

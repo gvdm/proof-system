@@ -203,7 +203,7 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
   def derivableJudgement(derivable: Objct): Judgement = try {
     derivable match {
       // asInstanceOf should be safe as the Objcts in a ⊢ Judgement should be Judgements themselves
-      case Judgement("⊢", subs, fix) ⇒ subs.last.asInstanceOf[Judgement]
+      case Judgement("⊢", subs, fix, dsym) ⇒ subs.last.asInstanceOf[Judgement]
       case _                         ⇒ throw InvalidJudgementException("Objct is not a derivability judgement")
     }
   } catch {

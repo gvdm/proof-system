@@ -17,7 +17,7 @@
 
 object Chr {
   def apply(c: Objct, Σ: Set[Judgement] = Strings.alphabet) =
-    Derivable(Σ, Judgement("char", List(c), PostFix)) /*{
+    Derivable(Σ, Judgement("char", List(c), PostFix), "Σ") /*{
     override def toString = "Σ " + symbol + " " + subjects.last
   }*/ // TODO: make better toString for char and str judgements (collapse alphabet)
 
@@ -29,7 +29,7 @@ object Chr {
 
 object Str {
   def apply(s: Objct, Σ: Set[Judgement] = Strings.alphabet) =
-    Derivable(Σ, Judgement("str", List(s), PostFix))
+    Derivable(Σ, Judgement("str", List(s), PostFix), "Σ")
   //def apply(c: Objct, s: Objct, Σ: Set[Judgement]) =
   //  Derivable(Σ, Judgement("str", List(c, s), PostFix))
 
