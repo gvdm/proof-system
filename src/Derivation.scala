@@ -141,18 +141,20 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
         val variables = rule.statement.subjects.flatMap(_.vars) toSet // same as distinct, but maybe makes it faster?
         // get all objcts from the subjcts of derived judgements
         // when working with derivability judgements pull out all the subjects of the judgements in the judgement
-        val objcts = validDerivations.map(d ⇒ if (isDerivabilityJudgement(d.statement)) d.statement.subjects.map(_.asInstanceOf[Judgement])
-        else List(d.statement)
-        ).flatten.flatMap(_.subjects)
+        val objcts = validDerivations.map(d ⇒ {
+          if (isDerivabilityJudgement(d.statement)) d.statement.subjects.map(_.asInstanceOf[Judgement])
+          else List(d.statement)
+        }).flatten.flatMap(_.subjects)
 
         // for every variable, map to every object (that has been seen in validDerivations)
         // the cartesian product of variables and objcts gives all the possible combinations
         // then we construct every unique grouping of variables to create environments that map variables
         // uniquely and cover every object
         var varReplacements: Traversable[Traversable[(Var, Objct)]] = Traversable(Traversable())
-        for (v ← cartesianProduct(variables, objcts)) {
-          varReplacements = v.flatMap(vo ⇒ varReplacements.map(_ ++ Set(vo))) toSet
+        for (v: Set[(Var, Objct)] ← cartesianProduct(variables, objcts) map (_.toSet)) {
+          varReplacements = v.flatMap(vo ⇒ varReplacements.map(_ ++ Set(vo)))
         } // varReplacements is now objects^variables large, luckily, most rules do not use /too/ many vars
+        // this is way slow, hugely slow, concatenation due to the 4 vars and having a whole alphabet of objcts is a known case
 
         // can't work due to semi recursive/iterative nature of building unique var lists, hence above implementation
         //val varReplacements = cartesianProduct(variables, validDerivations.map(_.statement).flatMap(_.subjects)).map(_.flatMap(vo ⇒ varReplacements.map(_ ++ Set(vo))))
@@ -204,7 +206,7 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
     derivable match {
       // asInstanceOf should be safe as the Objcts in a ⊢ Judgement should be Judgements themselves
       case Judgement("⊢", subs, fix, dsym) ⇒ subs.last.asInstanceOf[Judgement]
-      case _                         ⇒ throw InvalidJudgementException("Objct is not a derivability judgement")
+      case _                               ⇒ throw InvalidJudgementException("Objct is not a derivability judgement")
     }
   } catch {
     // but if it isn't we throw a nice exception

@@ -119,15 +119,15 @@ object Parametric {
 
 object Eq {
   def apply(a: Objct, b: Objct) = Judgement("=", List(a, b), InFix)
-  //  def unapply(o: Objct): Option[Judgement] = o match {
-  //    case j@Judgement("=", subs, fix) ⇒ Some(j)
-  //    case _                           ⇒ None
-  //  }
-  //  def unapply(s: String): Option[Judgement] = try {
-  //    Some(Judgement("=", List(s.split("=")(0), s.split("=")(1)), InFix))
-  //  } catch {
-  //    case _ => None
-  //  }
+  //def unapply(o: Objct): Option[Judgement] = o match {
+  //  case j@Judgement("=", subs, fix) ⇒ Some(j)
+  //  case _                           ⇒ None
+  //}
+  //def unapply(s: String): Option[Judgement] = try {
+  //Some(Judgement("=", List(s.split("=")(0), s.split("=")(1)), InFix))
+  //} catch {
+  //  case _ => None
+  //}
 }
 
 object IsType { def apply(typ: Objct) = Judgement("type", List(typ), PostFix) }

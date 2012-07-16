@@ -99,8 +99,10 @@ object Strings extends ObjctDef {
     // string concatenation
     //Axiom(StringCat(nullStr, Var("s"), Var("s"))),
     InferenceRule(Set(Str(Var("s"))),
-        StringCat(nullStr, Var("s"), Var("s"))),
-    InferenceRule(Set(StringCat(Var("s1"), Var("s2"), Var("s"))),
-      StringCat(StringCons(Var("c"), Var("s1")), Var("s2"), StringCons(Var("c"), Var("s"))))
+                  StringCat(nullStr, Var("s"), Var("s"))),
+    InferenceRule(Set(Str(Var("s1")), Str(Var("s2")), Str(Var("s")),
+                      StringCat(Var("s1"), Var("s2"), Var("s"))),
+                  StringCat(StringCons(Var("c"), Var("s1")), Var("s2"),
+                            StringCons(Var("c"), Var("s"))))
   )
 }

@@ -11,7 +11,7 @@ Somewhere down the line there will be the ability to construct environments/
 contexts for proofs. Also, some kind of interface to allow for interactive
 editing and testing of theorems/proofs. Being able to save/load created rules.
 Some kind of syntax for reperesenting the proofs in a kind of pretty-print
-fashion while still being easy to write/read. 
+fashion while still being easy to write/read.
 
 This program is based on the work done in Practical Foundations for Programming
 Languages by Robert Harper from Carnegie Mellon University [Draft of June 6,
