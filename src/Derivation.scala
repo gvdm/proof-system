@@ -180,9 +180,16 @@ class Derive(theorem: Judgement, context: Set[Rule] = Rules.rules) {
               {
                 // if the premises have already been derived
                 if (envPremises._2.subsetOf(derivedJudgements)) {
-                  newDerivations += Derivation(judgementStatement(conclusion).replaceVars(envPremises._1),
-                    envPremises._2.map(p ⇒ validDerivations.find(d ⇒ p == judgementStatement(d.statement))
-                      .get), rule)
+                  val premiseDerivations = envPremises._2.map(p ⇒ validDerivations.find(d ⇒ p == judgementStatement(d.statement)) match {
+                    case Some(d) => d
+                    case None => conclusion match {
+                      case Derivable(h, c) => if (h.contains(p)) Derivation(p, Set(), Axiom(p))
+                      else throw new Error("this premise is in the set of the derived judgements yet cannot be found in" +
+                      		"validDerivations and is not a hypothesis of this rule, this should NOT be able" +
+                      		"to happen and has not happened yet")
+                    }
+                  })
+                  newDerivations += Derivation(judgementStatement(conclusion).replaceVars(envPremises._1), premiseDerivations, rule)
                 }
               }
             }
