@@ -44,6 +44,7 @@ object ProofExplorationNegotiationandInspectionSystem {
     Judgement("max", List(Succ(Succ(Succ(Zero))), Succ(Succ(Zero)), Succ(Succ(Succ(Zero))))),
     Derivable(Nat(Val("junk")), Nat(Succ(Succ(Val("junk"))))),
     Str(StringCons(Character(Val('s')), Strings.nullStr)),
+    StringCat(StringObjct("hel"), StringObjct("lo"), StringObjct("hello"))
   )
 
   val invalid = List(
